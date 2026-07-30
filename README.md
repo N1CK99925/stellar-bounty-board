@@ -315,22 +315,20 @@ A `vercel.json` is included for SPA routing configuration.
 
 ## Contract Addresses
 
-> Fill in after running `./scripts/deploy.sh testnet alice`.
-
 | Contract | Address |
 |---|---|
-| bounty-contract | `<TODO: BOUNTY_CONTRACT_ID>` |
-| reputation-contract | `<TODO: REPUTATION_CONTRACT_ID>` |
+| bounty-contract | `CDILINO5W2FYL6IDIKUICS7OGYXQWMMUIA2GO4FRI2I4YV5UZQ5FFJYM` |
+| reputation-contract | `CDG4TDKVA3L64BNNTF5P754WCDIAYHOROY4GEAISNXWRSOQTEBBLPFPJ` |
 
 ---
 
 ## Example Transaction
 
-> A real transaction hash from `./scripts/demo_interaction.sh` demonstrating the full bounty lifecycle (create → claim → complete, triggering the inter-contract reputation call).
+> Verified on-chain lifecycle: create_bounty → claim_bounty → complete_bounty → increase_reputation.
 
-Transaction hash: `<TODO: TRANSACTION_HASH>`
+Transaction hash: `f6b6fab4c32c1ca3e7185b17921caf4dbbbf597885678a828516132c577637f1`
 
-View on Explorer: `https://stellar.expert/explorer/testnet/tx/<TODO: TRANSACTION_HASH>`
+View on Explorer: `https://stellar.expert/explorer/testnet/tx/f6b6fab4c32c1ca3e7185b17921caf4dbbbf597885678a828516132c577637f1`
 
 ---
 

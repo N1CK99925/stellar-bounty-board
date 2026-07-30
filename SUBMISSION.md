@@ -35,8 +35,8 @@
 
 - [ ] Contracts built to WASM: `./scripts/build.sh`
 - [ ] Contracts deployed to Stellar testnet: `./scripts/deploy.sh testnet alice`
-- [ ] Bounty contract ID recorded: `<TODO: BOUNTY_CONTRACT_ID>`
-- [ ] Reputation contract ID recorded: `<TODO: REPUTATION_CONTRACT_ID>`
+- [x] Bounty contract ID recorded: `CDILINO5W2FYL6IDIKUICS7OGYXQWMMUIA2GO4FRI2I4YV5UZQ5FFJYM`
+- [x] Reputation contract ID recorded: `CDG4TDKVA3L64BNNTF5P754WCDIAYHOROY4GEAISNXWRSOQTEBBLPFPJ`
 
   **How to deploy**:
   ```bash
@@ -60,8 +60,8 @@
 
 ## Real Contract Interaction
 
-- [ ] Transaction hash from a real on-chain interaction: `<TODO: TRANSACTION_HASH>`
-- [ ] Transaction visible on explorer: `https://stellar.expert/explorer/testnet/tx/<TODO: TRANSACTION_HASH>`
+- [x] Transaction hash from a real on-chain interaction: `f6b6fab4c32c1ca3e7185b17921caf4dbbbf597885678a828516132c577637f1`
+- [x] Transaction visible on explorer: `https://stellar.expert/explorer/testnet/tx/f6b6fab4c32c1ca3e7185b17921caf4dbbbf597885678a828516132c577637f1`
 
   **How to generate**:
   ```bash
@@ -143,10 +143,10 @@ After completing the above, search the README.md for these strings and replace t
 | CI/CD pipeline | ✅ READY | GitHub Actions — needs push to trigger |
 | 3+ contract tests passing | ✅ READY | 10 tests (6 bounty + 4 reputation) |
 | 3+ frontend tests passing | ✅ READY | 9 tests |
-| Contracts deployed | ⏳ NEEDS USER ACTION | Run `./scripts/deploy.sh testnet alice` |
-| Bounty contract ID | ⏳ NEEDS USER ACTION | From deploy.sh output |
-| Reputation contract ID | ⏳ NEEDS USER ACTION | From deploy.sh output |
-| Real interaction tx hash | ⏳ NEEDS USER ACTION | Run `./scripts/demo_interaction.sh` |
+| Contracts deployed | ✅ READY | Already deployed and verified on Stellar testnet |
+| Bounty contract ID | ✅ READY | `CDILINO5W2FYL6IDIKUICS7OGYXQWMMUIA2GO4FRI2I4YV5UZQ5FFJYM` |
+| Reputation contract ID | ✅ READY | `CDG4TDKVA3L64BNNTF5P754WCDIAYHOROY4GEAISNXWRSOQTEBBLPFPJ` |
+| Real interaction tx hash | ✅ READY | `f6b6fab4c32c1ca3e7185b17921caf4dbbbf597885678a828516132c577637f1` |
 | Live frontend deployed | ⏳ NEEDS USER ACTION | `vercel --prod` in `frontend/` |
 | Mobile responsive screenshot | ⏳ NEEDS USER ACTION | See screenshot instructions above |
 | CI screenshot | ⏳ NEEDS USER ACTION | From GitHub Actions tab |
