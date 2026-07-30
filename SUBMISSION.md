@@ -111,10 +111,10 @@ Capture these screenshots and link them in README.md:
 
 ## Demo Video
 
-- [ ] 1–2 minute demo video recorded
-- [ ] Video uploaded to YouTube/Loom/etc.
-- [ ] Video link added to README: `<TODO: DEMO_VIDEO_URL>`
-- [ ] Video link added below: `<TODO: DEMO_VIDEO_URL>`
+- [x] 1–2 minute demo video recorded
+- [x] Video uploaded to YouTube/Loom/etc.
+- [x] Video link added to README: `https://www.loom.com/share/625a0708c38847aa83968666b43c4c99`
+- [x] Video link added below: `https://www.loom.com/share/625a0708c38847aa83968666b43c4c99`
 
   See [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) for a concise script.
 

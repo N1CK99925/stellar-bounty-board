@@ -353,7 +353,7 @@ Frontend: `https://stellarbountyboard.netlify.app/`
 
 ## Demo Video
 
-`<TODO: DEMO_VIDEO_URL>` (1–2 minute walkthrough of wallet connection, bounty lifecycle, inter-contract reputation, and CI pipeline). This remains the final outstanding evidence item for submission.
+[https://www.loom.com/share/625a0708c38847aa83968666b43c4c99](https://www.loom.com/share/625a0708c38847aa83968666b43c4c99) (1–2 minute walkthrough of wallet connection, bounty lifecycle, inter-contract reputation, and CI pipeline).
 
 ---
 
