@@ -1,54 +1,124 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { rpc as StellarRpc } from "@stellar/stellar-sdk";
 import { BountyCard } from "./components/BountyCard";
 import { CreateBountyForm } from "./components/CreateBountyForm";
 import { ErrorBanner } from "./components/ErrorBanner";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { WalletButton } from "./components/WalletButton";
-import { connectWallet, WalletError } from "./lib/wallet";
-import { CONFIG } from "./lib/contracts";
+import { connectWallet, signTx, WalletError } from "./lib/wallet";
+import {
+  CONFIG,
+  ContractCallError,
+  buildCreateBountyTx,
+  buildClaimBountyTx,
+  buildCompleteBountyTx,
+  fetchBounty,
+  fetchBountyIdsFromEvents,
+  prepareTransaction,
+  submitTransaction,
+} from "./lib/contracts";
 import { MOCK_BOUNTIES } from "./lib/mockData";
 import type { Bounty } from "./lib/types";
 
 const isDemoMode = !CONFIG.bountyContractId;
+
+/** Polling interval in ms for refreshing bounty state in production mode. */
+const POLL_INTERVAL_MS = 12_000;
 
 export default function App() {
   const [bounties, setBounties] = useState<Bounty[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [txHash, setTxHash] = useState<string | null>(null);
 
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
+  // Track the start ledger for event polling so we don't re-fetch the
+  // entire history on every poll cycle.
+  const pollLedgerRef = useRef<number | undefined>(undefined);
+  const knownIdsRef = useRef<Set<number>>(new Set());
 
-    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-        // In demo mode (no contract configured yet) we show sample data so
-        // the UI is fully explorable. Once VITE_BOUNTY_CONTRACT_ID is set,
-        // wire this up to `fetchBounty` from lib/contracts.ts for each
-        // known bounty id, or track ids via the `b_create` contract event.
-        await new Promise((resolve) => setTimeout(resolve, 400));
-        if (!cancelled) {
-          setBounties(isDemoMode ? MOCK_BOUNTIES : []);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load bounties.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  /** Loads bounties from the live contract or from mock data in demo mode. */
+  const loadBounties = useCallback(async () => {
+    if (isDemoMode) {
+      // Simulate network latency so loading state is visible in demo mode.
+      await new Promise((r) => setTimeout(r, 400));
+      setBounties(MOCK_BOUNTIES);
+      setLoading(false);
+      return;
     }
 
-    load();
+    try {
+      // Discover bounty IDs via contract events, then fetch each bounty.
+      const ids = await fetchBountyIdsFromEvents(pollLedgerRef.current);
+      const newIds = ids.filter((id) => !knownIdsRef.current.has(id));
+
+      if (newIds.length > 0) {
+        const fetched = await Promise.all(
+          newIds.map((id) => fetchBounty(id).catch(() => null)),
+        );
+        const valid = fetched.filter(Boolean) as Bounty[];
+        for (const id of newIds) knownIdsRef.current.add(id);
+        setBounties((prev) => {
+          // Merge: update existing, append new
+          const map = new Map(prev.map((b) => [b.id, b]));
+          for (const b of valid) map.set(b.id, b);
+          return Array.from(map.values()).sort((a, b) => b.id - a.id);
+        });
+      }
+
+      // Also refresh known bounties in case their status changed.
+      if (knownIdsRef.current.size > 0) {
+        const refreshed = await Promise.all(
+          Array.from(knownIdsRef.current).map((id) =>
+            fetchBounty(id).catch(() => null),
+          ),
+        );
+        const valid = refreshed.filter(Boolean) as Bounty[];
+        setBounties((prev) => {
+          const map = new Map(prev.map((b) => [b.id, b]));
+          for (const b of valid) map.set(b.id, b);
+          return Array.from(map.values()).sort((a, b) => b.id - a.id);
+        });
+      }
+    } catch (err) {
+      setError(
+        err instanceof ContractCallError || err instanceof Error
+          ? err.message
+          : "Failed to load bounties.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    loadBounties().then(() => {
+      if (cancelled) return;
+    });
+
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadBounties]);
+
+  // Polling for real-time updates (production mode only)
+  useEffect(() => {
+    if (isDemoMode) return;
+
+    const interval = setInterval(() => {
+      loadBounties();
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [loadBounties]);
 
   async function handleConnect() {
     setConnecting(true);
@@ -67,23 +137,58 @@ export default function App() {
     }
   }
 
-  function handleCreate(values: { id: number; amount: number; description: string }) {
+  async function handleCreate(values: {
+    id: number;
+    amount: number;
+    description: string;
+  }) {
     if (!walletAddress) {
       setError("Connect your wallet before posting a bounty.");
       return;
     }
-    const newBounty: Bounty = {
-      id: values.id,
-      creator: walletAddress,
-      claimer: null,
-      amount: values.amount,
-      description: values.description,
-      status: "Open",
-    };
-    // Demo-mode local update. With a deployed contract, build and submit a
-    // `create_bounty` transaction here (see buildCreateBountyTx) and only
-    // update local state after the transaction is confirmed.
-    setBounties((prev) => [newBounty, ...prev]);
+
+    if (isDemoMode) {
+      // Demo-mode local update
+      const newBounty: Bounty = {
+        id: values.id,
+        creator: walletAddress,
+        claimer: null,
+        amount: values.amount,
+        description: values.description,
+        status: "Open",
+      };
+      setBounties((prev) => [newBounty, ...prev]);
+      return;
+    }
+
+    setBusyId(values.id);
+    setError(null);
+    setTxHash(null);
+    try {
+      const server = new StellarRpc.Server(CONFIG.rpcUrl);
+      const accountInfo = await server.getAccount(walletAddress);
+      const tx = buildCreateBountyTx({
+        sourcePublicKey: walletAddress,
+        sourceSequence: accountInfo.sequenceNumber().toString(),
+        id: values.id,
+        amount: values.amount,
+        description: values.description,
+      });
+      const prepared = await prepareTransaction(tx);
+      const signed = await signTx(prepared.toXDR(), CONFIG.networkPassphrase);
+      const hash = await submitTransaction(signed);
+      setTxHash(hash);
+      // Refresh to pick up the new bounty
+      await loadBounties();
+    } catch (err) {
+      setError(
+        err instanceof WalletError || err instanceof ContractCallError || err instanceof Error
+          ? err.message
+          : "Could not create bounty.",
+      );
+    } finally {
+      setBusyId(null);
+    }
   }
 
   async function handleClaim(id: number) {
@@ -91,32 +196,84 @@ export default function App() {
       setError("Connect your wallet before claiming a bounty.");
       return;
     }
+
     setBusyId(id);
     setError(null);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
+    setTxHash(null);
+
+    if (isDemoMode) {
+      await new Promise((r) => setTimeout(r, 300));
       setBounties((prev) =>
         prev.map((b) =>
           b.id === id ? { ...b, status: "Claimed", claimer: walletAddress } : b,
         ),
       );
+      setBusyId(null);
+      return;
+    }
+
+    try {
+      const server = new StellarRpc.Server(CONFIG.rpcUrl);
+      const accountInfo = await server.getAccount(walletAddress);
+      const tx = buildClaimBountyTx({
+        sourcePublicKey: walletAddress,
+        sourceSequence: accountInfo.sequenceNumber().toString(),
+        id,
+      });
+      const prepared = await prepareTransaction(tx);
+      const signed = await signTx(prepared.toXDR(), CONFIG.networkPassphrase);
+      const hash = await submitTransaction(signed);
+      setTxHash(hash);
+      await loadBounties();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not claim bounty.");
+      setError(
+        err instanceof WalletError || err instanceof ContractCallError || err instanceof Error
+          ? err.message
+          : "Could not claim bounty.",
+      );
     } finally {
       setBusyId(null);
     }
   }
 
   async function handleComplete(id: number) {
+    if (!walletAddress) {
+      setError("Connect your wallet before marking a bounty complete.");
+      return;
+    }
+
     setBusyId(id);
     setError(null);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
+    setTxHash(null);
+
+    if (isDemoMode) {
+      await new Promise((r) => setTimeout(r, 300));
       setBounties((prev) =>
         prev.map((b) => (b.id === id ? { ...b, status: "Completed" } : b)),
       );
+      setBusyId(null);
+      return;
+    }
+
+    try {
+      const server = new StellarRpc.Server(CONFIG.rpcUrl);
+      const accountInfo = await server.getAccount(walletAddress);
+      const tx = buildCompleteBountyTx({
+        sourcePublicKey: walletAddress,
+        sourceSequence: accountInfo.sequenceNumber().toString(),
+        id,
+      });
+      const prepared = await prepareTransaction(tx);
+      const signed = await signTx(prepared.toXDR(), CONFIG.networkPassphrase);
+      const hash = await submitTransaction(signed);
+      setTxHash(hash);
+      await loadBounties();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not complete bounty.");
+      setError(
+        err instanceof WalletError || err instanceof ContractCallError || err instanceof Error
+          ? err.message
+          : "Could not complete bounty.",
+      );
     } finally {
       setBusyId(null);
     }
@@ -155,7 +312,31 @@ export default function App() {
 
         {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
-        <CreateBountyForm onSubmit={handleCreate} />
+        {txHash && (
+          <div
+            data-testid="tx-hash-banner"
+            className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"
+          >
+            ✅ Transaction confirmed:{" "}
+            <a
+              href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono underline hover:text-emerald-900"
+            >
+              {txHash.slice(0, 16)}…
+            </a>{" "}
+            <button
+              onClick={() => setTxHash(null)}
+              className="ml-2 font-medium hover:text-emerald-900"
+              aria-label="Dismiss transaction notification"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        <CreateBountyForm onSubmit={handleCreate} disabled={!!busyId} />
 
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -181,6 +362,19 @@ export default function App() {
               />
             ))}
         </section>
+
+        {!isDemoMode && (
+          <p className="text-center text-xs text-slate-400">
+            State refreshes every {POLL_INTERVAL_MS / 1000}s via Soroban RPC event
+            polling.{" "}
+            <button
+              onClick={() => loadBounties()}
+              className="underline hover:text-slate-600"
+            >
+              Refresh now
+            </button>
+          </p>
+        )}
       </main>
     </div>
   );

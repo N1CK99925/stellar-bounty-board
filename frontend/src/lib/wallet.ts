@@ -4,6 +4,7 @@ import {
   setAllowed,
   getAddress,
   getNetwork,
+  signTransaction,
 } from "@stellar/freighter-api";
 
 export class WalletError extends Error {}
@@ -52,4 +53,37 @@ export async function connectWallet(): Promise<{
     address: addressResult.address,
     network: networkResult.network || "UNKNOWN",
   };
+}
+
+/**
+ * Signs a transaction XDR with the Freighter wallet and returns the signed XDR.
+ * Throws a WalletError if the user rejects the transaction or Freighter is unavailable.
+ */
+export async function signTx(
+  txXdr: string,
+  networkPassphrase: string,
+): Promise<string> {
+  const result = await signTransaction(txXdr, {
+    networkPassphrase,
+  });
+
+  if (result.error) {
+    if (
+      result.error.message?.toLowerCase().includes("user") ||
+      result.error.message?.toLowerCase().includes("cancel") ||
+      result.error.message?.toLowerCase().includes("reject") ||
+      result.error.message?.toLowerCase().includes("denied")
+    ) {
+      throw new WalletError("Transaction was rejected in Freighter.");
+    }
+    throw new WalletError(
+      result.error.message || "Failed to sign the transaction in Freighter.",
+    );
+  }
+
+  if (!result.signedTxXdr) {
+    throw new WalletError("Freighter did not return a signed transaction.");
+  }
+
+  return result.signedTxXdr;
 }
