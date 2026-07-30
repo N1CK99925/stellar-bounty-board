@@ -334,7 +334,7 @@ View on Explorer: `https://stellar.expert/explorer/testnet/tx/f6b6fab4c32c1ca3e7
 
 ## Live Demo
 
-Frontend: `<TODO: LIVE_DEMO_URL>`
+Frontend: `https://stellarbountyboard.netlify.app/`
 
 ---
 

@@ -74,8 +74,8 @@
 
 ## Live Frontend
 
-- [ ] Frontend deployed to Vercel (or Netlify)
-- [ ] Live URL: `<TODO: LIVE_DEMO_URL>`
+- [x] Frontend deployed to Vercel (or Netlify)
+- [x] Live URL: `https://stellarbountyboard.netlify.app/`
 
   **How to deploy**:
   ```bash
@@ -147,7 +147,7 @@ After completing the above, search the README.md for these strings and replace t
 | Bounty contract ID | ✅ READY | `CDILINO5W2FYL6IDIKUICS7OGYXQWMMUIA2GO4FRI2I4YV5UZQ5FFJYM` |
 | Reputation contract ID | ✅ READY | `CDG4TDKVA3L64BNNTF5P754WCDIAYHOROY4GEAISNXWRSOQTEBBLPFPJ` |
 | Real interaction tx hash | ✅ READY | `f6b6fab4c32c1ca3e7185b17921caf4dbbbf597885678a828516132c577637f1` |
-| Live frontend deployed | ⏳ NEEDS USER ACTION | `vercel --prod` in `frontend/` |
+| Live frontend deployed | ✅ READY | `https://stellarbountyboard.netlify.app/` |
 | Mobile responsive screenshot | ⏳ NEEDS USER ACTION | See screenshot instructions above |
 | CI screenshot | ⏳ NEEDS USER ACTION | From GitHub Actions tab |
 | Test output screenshot | ⏳ NEEDS USER ACTION | From terminal output |
