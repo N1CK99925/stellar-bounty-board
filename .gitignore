@@ -1,0 +1,20 @@
+# Rust / Cargo
+/target
+**/target
+
+# Node / frontend
+frontend/node_modules
+frontend/dist
+frontend/.env
+frontend/*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log*
