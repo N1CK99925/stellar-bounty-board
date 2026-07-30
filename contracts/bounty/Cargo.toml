@@ -9,10 +9,16 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 soroban-sdk = "=20.3.0"
-reputation-contract = { path = "../reputation" }
+# default-features = false disables reputation-contract's `contract` feature,
+# so only the ReputationContractClient type (via #[contractclient]) is compiled
+# — no #[no_mangle] WASM exports that would collide with bounty-contract's own
+# entry points ("symbol multiply defined" linker error).
+reputation-contract = { path = "../reputation", default-features = false }
 
 [dev-dependencies]
 soroban-sdk = { version = "=20.3.0", features = ["testutils"] }
+# testutils implies `contract`, giving tests access to the full ReputationContract
+# struct needed for env.register_contract() in the test harness.
 reputation-contract = { path = "../reputation", features = ["testutils"] }
 
 [features]

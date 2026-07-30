@@ -8,6 +8,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # stellar-cli version used for WASM builds. Keep in sync with docs/DEPLOYMENT.md.
+  STELLAR_CLI_VERSION: "21.4.1"
 
 jobs:
   contracts:
@@ -16,15 +18,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # rust-toolchain.toml in the repo root pins the exact channel, so
-      # dtolnay/rust-toolchain reads it automatically.
-      - name: Install Rust toolchain (from rust-toolchain.toml)
+      - name: Install Rust toolchain 1.81.0
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: "1.81.0"
           targets: wasm32-unknown-unknown
 
-      - name: Cache cargo registry
+      - name: Cache cargo registry & build artifacts
         uses: actions/cache@v4
         with:
           path: |
@@ -35,16 +35,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
+      # Run unit tests using the host (native) target — no network, no stellar-cli needed.
+      # Tests use Soroban's in-process simulator (Env::default()) and mock_all_auths().
       - name: Run contract unit tests
         run: cargo test --workspace
 
-      - name: Install stellar-cli (for optimized WASM builds)
-        run: cargo install --locked stellar-cli --version 21.4.1 2>/dev/null || true
+      # Install stellar-cli to drive the optimised WASM builds.
+      # Using cargo install is slowish but reliable; the cargo cache above helps.
+      - name: Install stellar-cli ${{ env.STELLAR_CLI_VERSION }}
+        run: cargo install --locked stellar-cli --version ${{ env.STELLAR_CLI_VERSION }}
 
-      - name: Build contracts to WASM (release)
-        run: |
-          stellar contract build --package reputation-contract
-          stellar contract build --package bounty-contract
+      # stellar contract build compiles to wasm32-unknown-unknown with the
+      # correct release profile and soroban-specific flags.
+      - name: Build reputation-contract to WASM
+        run: stellar contract build --package reputation-contract
+
+      - name: Build bounty-contract to WASM
+        run: stellar contract build --package bounty-contract
 
       - name: Upload WASM artifacts
         uses: actions/upload-artifact@v4
@@ -61,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Node.js
+      - name: Install Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -71,16 +78,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
+      - name: TypeScript type check
         run: npx tsc -b
 
-      - name: Run tests
+      - name: Run frontend tests (9 tests)
         run: npm test
 
       - name: Build production bundle
         run: npm run build
         env:
-          # Use empty contract IDs so demo-mode is active during build;
-          # the real IDs are injected at Vercel deployment time.
+          # Empty contract IDs → demo mode during CI build.
+          # Real IDs are injected via Vercel environment variables at deploy time.
           VITE_BOUNTY_CONTRACT_ID: ""
           VITE_REPUTATION_CONTRACT_ID: ""

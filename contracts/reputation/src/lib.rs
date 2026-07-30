@@ -1,8 +1,9 @@
 #![no_std]
 
-use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, symbol_short, Address, Env, Symbol,
-};
+use soroban_sdk::{contracterror, contracttype, Address};
+
+#[cfg(not(feature = "contract"))]
+use soroban_sdk::{contractclient, Env};
 
 #[derive(Clone)]
 #[contracttype]
@@ -21,76 +22,37 @@ pub enum Error {
     Unauthorized = 3,
 }
 
-const REP_UP: Symbol = symbol_short!("rep_up");
-
-#[contract]
-pub struct ReputationContract;
-
-#[contractimpl]
-impl ReputationContract {
-    /// Initialize the contract with an admin address.
-    /// The admin is the only account allowed to designate which
-    /// contract (e.g. the bounty contract) may call `increase_reputation`.
-    pub fn initialize(env: Env, admin: Address) -> Result<(), Error> {
-        if env.storage().instance().has(&DataKey::Admin) {
-            return Err(Error::AlreadyInitialized);
-        }
-        admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
-        Ok(())
-    }
-
-    /// Admin-only: register the contract address that is allowed to call
-    /// `increase_reputation`. In this project that is the bounty contract,
-    /// demonstrating inter-contract communication and access control.
-    pub fn set_authorized_caller(env: Env, admin: Address, caller: Address) -> Result<(), Error> {
-        let stored_admin: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::Admin)
-            .ok_or(Error::NotInitialized)?;
-
-        if stored_admin != admin {
-            return Err(Error::Unauthorized);
-        }
-        admin.require_auth();
-
-        env.storage()
-            .instance()
-            .set(&DataKey::AuthorizedCaller, &caller);
-        Ok(())
-    }
-
-    /// Increases a user's reputation score. Can only be invoked by the
-    /// contract registered via `set_authorized_caller` (the bounty
-    /// contract), which authorizes itself automatically when it makes
-    /// this cross-contract call.
-    pub fn increase_reputation(env: Env, user: Address, points: u32) -> Result<u32, Error> {
-        let authorized: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::AuthorizedCaller)
-            .ok_or(Error::NotInitialized)?;
-
-        authorized.require_auth();
-
-        let key = DataKey::Reputation(user.clone());
-        let current: u32 = env.storage().persistent().get(&key).unwrap_or(0);
-        let updated = current.saturating_add(points);
-        env.storage().persistent().set(&key, &updated);
-
-        env.events().publish((REP_UP, user), updated);
-
-        Ok(updated)
-    }
-
-    /// Read-only lookup of a user's current reputation score.
-    pub fn get_reputation(env: Env, user: Address) -> u32 {
-        env.storage()
-            .persistent()
-            .get(&DataKey::Reputation(user))
-            .unwrap_or(0)
-    }
+// ---------------------------------------------------------------------------
+// Client interface — always compiled regardless of feature flags.
+//
+// When reputation-contract is used as a library dep by bounty-contract
+// (with default-features = false, so the `contract` feature is OFF), only
+// this #[contractclient] trait is compiled. It generates `ReputationContractClient`
+// without any #[no_mangle] WASM exports, preventing "symbol multiply defined"
+// linker errors.
+//
+// When the `contract` feature IS active (building this package standalone or
+// in tests), the full #[contractimpl] generates its own ReputationContractClient,
+// so we skip this trait to avoid a duplicate type definition.
+// ---------------------------------------------------------------------------
+#[cfg(not(feature = "contract"))]
+#[contractclient(name = "ReputationContractClient")]
+pub trait ReputationContractInterface {
+    fn initialize(env: Env, admin: Address) -> Result<(), Error>;
+    fn set_authorized_caller(env: Env, admin: Address, caller: Address) -> Result<(), Error>;
+    fn increase_reputation(env: Env, user: Address, points: u32) -> Result<u32, Error>;
+    fn get_reputation(env: Env, user: Address) -> u32;
 }
+
+// ---------------------------------------------------------------------------
+// Full contract implementation — compiled only when `contract` feature is on.
+// Gating it prevents its #[no_mangle] WASM entry points from being linked
+// into bounty-contract's WASM, which would duplicate symbols.
+// ---------------------------------------------------------------------------
+#[cfg(feature = "contract")]
+pub mod contract;
+
+#[cfg(feature = "contract")]
+pub use contract::{ReputationContract, ReputationContractClient};
 
 mod test;
