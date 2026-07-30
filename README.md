@@ -8,7 +8,7 @@
 
 ## Overview
 
-Stellar Bounty Board lets anyone post a paid task ("bounty"), allows any Stellar wallet holder to claim it, and automatically rewards the claimer with on-chain reputation points when the creator marks it complete. Every action is a real on-chain transaction — no off-chain state or centralised database.
+Stellar Bounty Board lets anyone post an on-chain bounty, allows any Stellar wallet holder to claim it, and automatically rewards the claimer with on-chain reputation points when the creator marks it complete. Every action is a real on-chain transaction — no off-chain state or centralised database.
 
 This project was built as a **Stellar Level 3 Orange Belt** submission, focusing on production-style engineering rather than a minimal demo.
 
@@ -16,7 +16,7 @@ This project was built as a **Stellar Level 3 Orange Belt** submission, focusing
 
 ## Problem
 
-Freelance work and open-source contribution lack transparent, trust-minimized incentive mechanisms. Existing bounty platforms rely on centralised escrow and reputation systems that are opaque, siloed, and vendor-locked.
+Freelance work and open-source contribution lack transparent, trust-minimized incentive mechanisms. Existing bounty platforms often rely on centralised reputation systems that are opaque, siloed, and vendor-locked.
 
 ---
 
@@ -31,7 +31,7 @@ Two communicating Soroban smart contracts provide an open, verifiable system:
 
 ## Features
 
-- 📋 **Post bounties** — describe a task and set an XLM reward
+- 📋 **Post bounties** — describe a task and set a bounty amount
 - 🙋 **Claim bounties** — commit to completing any open bounty
 - ✅ **Complete bounties** — creator approves completion, reputation is awarded on-chain
 - ❌ **Cancel bounties** — creator can cancel an unclaimed bounty
@@ -41,6 +41,17 @@ Two communicating Soroban smart contracts provide an open, verifiable system:
 - 🔒 **Access control** — every mutation requires wallet auth; only the bounty contract can award reputation
 - 📱 **Mobile responsive** — works on any screen size
 - 🧪 **10 contract tests + 9 frontend tests** — covering success, failure, and access-control paths
+
+---
+
+## Submission Quick Links
+
+- Live Demo: [https://stellarbountyboard.netlify.app/](https://stellarbountyboard.netlify.app/)
+- CI/CD: [GitHub Actions](https://github.com/N1CK99925/stellar-bounty-board/actions)
+- Bounty Contract: `CDILINO5W2FYL6IDIKUICS7OGYXQWMMUIA2GO4FRI2I4YV5UZQ5FFJYM`
+- Reputation Contract: `CDG4TDKVA3L64BNNTF5P754WCDIAYHOROY4GEAISNXWRSOQTEBBLPFPJ`
+- Verified Inter-Contract Transaction: [stellar.expert](https://stellar.expert/explorer/testnet/tx/f6b6fab4c32c1ca3e7185b17921caf4dbbbf597885678a828516132c577637f1)
+- Demo Video: `<TODO: DEMO_VIDEO_URL>`
 
 ---
 
@@ -91,7 +102,7 @@ This is on-chain inter-contract communication — not a frontend-simulated inter
 | Contract Tests | Soroban native test harness (`cargo test`) |
 | Frontend Tests | Vitest + React Testing Library |
 | CI/CD | GitHub Actions |
-| Deployment | Vercel (frontend), Stellar CLI (contracts) |
+| Deployment | Netlify (frontend), Stellar CLI (contracts) |
 
 ---
 
@@ -284,20 +295,22 @@ stellar keys fund alice --network testnet
 
 ---
 
-## Frontend Deployment (Vercel)
+## Frontend Deployment (Netlify)
 
-```bash
-cd frontend
-# Install Vercel CLI once: npm i -g vercel
-vercel
+The production frontend is hosted on Netlify at [https://stellarbountyboard.netlify.app/](https://stellarbountyboard.netlify.app/).
 
-# Or connect the GitHub repo at vercel.com/new and set:
-# Build Command:    npm run build
-# Output Directory: dist
-# Environment Variables: VITE_BOUNTY_CONTRACT_ID, VITE_REPUTATION_CONTRACT_ID, etc.
-```
+Netlify configuration:
+- Base directory: `frontend`
+- Build command: `npm run build`
+- Publish directory: `dist`
 
-A `vercel.json` is included for SPA routing configuration.
+Required production environment variables:
+- `VITE_BOUNTY_CONTRACT_ID=CDILINO5W2FYL6IDIKUICS7OGYXQWMMUIA2GO4FRI2I4YV5UZQ5FFJYM`
+- `VITE_REPUTATION_CONTRACT_ID=CDG4TDKVA3L64BNNTF5P754WCDIAYHOROY4GEAISNXWRSOQTEBBLPFPJ`
+- `VITE_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org`
+- `VITE_NETWORK_PASSPHRASE=Test SDF Network ; September 2015`
+
+A `vercel.json` file remains in the repository as optional legacy SPA routing configuration for Vercel-style deployments; it is not the production deployment architecture for this project.
 
 ---
 
@@ -340,19 +353,28 @@ Frontend: `https://stellarbountyboard.netlify.app/`
 
 ## Demo Video
 
-`<TODO: DEMO_VIDEO_URL>` (1–2 minute walkthrough of wallet connection, bounty lifecycle, inter-contract reputation, and CI pipeline)
+`<TODO: DEMO_VIDEO_URL>` (1–2 minute walkthrough of wallet connection, bounty lifecycle, inter-contract reputation, and CI pipeline). This remains the final outstanding evidence item for submission.
 
 ---
 
 ## Screenshots
 
-> Capture these after deployment. Exact instructions in [`SUBMISSION.md`](SUBMISSION.md).
+The following evidence files should be saved under the repository once captured:
 
-| Screenshot | Description |
-|---|---|
-| Mobile UI | `<TODO: screenshot — mobile view of the bounty board>` |
-| CI Pipeline | `<TODO: screenshot — GitHub Actions passing all jobs>` |
-| Test output | `<TODO: screenshot — 10 contract tests + 9 frontend tests passing>` |
+- `docs/screenshots/mobile-ui.png`
+- `docs/screenshots/ci-passing.png`
+- `docs/screenshots/tests-passing.png`
+
+When those files are available, they can be linked in this section as:
+
+### Mobile Responsive UI
+![Mobile Responsive UI](docs/screenshots/mobile-ui.jpeg)
+
+### Passing CI/CD Pipeline
+![Passing GitHub Actions CI](docs/screenshots/ci-passing.png)
+
+### Passing Tests
+![Passing test output](docs/screenshots/tests-passing.jpeg)
 
 ---
 

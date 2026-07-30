@@ -21,7 +21,7 @@
 
 ### [0:00 – 0:12] Introduction
 
-> "This is Stellar Bounty Board — a decentralized task bounty system built on Stellar Soroban. Anyone can post a paid task, anyone can claim it, and completing it automatically awards on-chain reputation through a real inter-contract call between two Soroban smart contracts."
+> "This is Stellar Bounty Board — a decentralized on-chain bounty system built on Stellar Soroban. Anyone can post a bounty, anyone can claim it, and completing it automatically awards on-chain reputation through a real inter-contract call between two Soroban smart contracts."
 
 *Show: the full desktop app with a few bounties visible.*
 

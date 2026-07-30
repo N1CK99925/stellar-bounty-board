@@ -2,14 +2,14 @@
 
 ## Repository & History
 
-- [ ] Public GitHub repository: https://github.com/N1CK99925/stellar-bounty-board
-- [ ] 10+ meaningful commits (repository already has 16+)
+- [x] Public GitHub repository: https://github.com/N1CK99925/stellar-bounty-board
+- [x] 10+ meaningful commits (repository already has 16+)
 
 ---
 
 ## CI/CD
 
-- [ ] CI pipeline passing on GitHub Actions
+- [x] CI pipeline passing on GitHub Actions
   - **How to verify**: Go to https://github.com/N1CK99925/stellar-bounty-board/actions
   - **What to capture**: Screenshot of the "CI" workflow showing both "Build & test Soroban contracts" and "Build & test frontend" jobs with green ✅ checkmarks
 
@@ -17,8 +17,8 @@
 
 ## Tests
 
-- [ ] 3+ passing contract tests (actual: **10 tests** — 6 bounty + 4 reputation)
-- [ ] 3+ passing frontend tests (actual: **9 tests** — 2 App + 4 BountyCard + 3 CreateBountyForm)
+- [x] 3+ passing contract tests (actual: **10 tests** — 6 bounty + 4 reputation)
+- [x] 3+ passing frontend tests (actual: **9 tests** — 2 App + 4 BountyCard + 3 CreateBountyForm)
 
   **How to capture test output screenshot**:
   ```bash
@@ -148,8 +148,8 @@ After completing the above, search the README.md for these strings and replace t
 | Reputation contract ID | ✅ READY | `CDG4TDKVA3L64BNNTF5P754WCDIAYHOROY4GEAISNXWRSOQTEBBLPFPJ` |
 | Real interaction tx hash | ✅ READY | `f6b6fab4c32c1ca3e7185b17921caf4dbbbf597885678a828516132c577637f1` |
 | Live frontend deployed | ✅ READY | `https://stellarbountyboard.netlify.app/` |
-| Mobile responsive screenshot | ⏳ NEEDS USER ACTION | See screenshot instructions above |
-| CI screenshot | ⏳ NEEDS USER ACTION | From GitHub Actions tab |
-| Test output screenshot | ⏳ NEEDS USER ACTION | From terminal output |
+| Mobile responsive screenshot | ✅ COMPLETE | Included in `docs/screenshots/mobile-ui.jpeg` |
+| CI screenshot | ✅ COMPLETE | Included in `docs/screenshots/ci-passing.png` |
+| Test output screenshot | ✅ COMPLETE | Included in `docs/screenshots/tests-passing.jpeg` |
 | Demo video recorded | ⏳ NEEDS USER ACTION | See DEMO_SCRIPT.md |
 | README placeholders replaced | ⏳ NEEDS USER ACTION | After all above are done |
