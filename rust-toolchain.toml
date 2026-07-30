@@ -1,0 +1,9 @@
+[toolchain]
+# Pinned for reproducible CI builds.
+# soroban-sdk 20.3.0 is compatible with stable Rust ≥1.79.
+# 1.81.0 is chosen as the last stable release before 1.82 introduced
+# wasm32v1-none as the required target (soroban contract build handles
+# this transparently, but direct `cargo build --target wasm32-unknown-unknown`
+# still works on 1.81 for contract unit tests in CI).
+channel = "1.81.0"
+targets = ["wasm32-unknown-unknown"]
